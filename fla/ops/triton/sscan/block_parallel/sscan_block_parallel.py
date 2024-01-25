@@ -25,8 +25,8 @@ def selective_scan_block_parallel(v, delta, A, B, C, D, initial_state=None):
 
     chunk_state = IntraChunkReduce.apply(v, A_bar, B_bar)
     chunk_gate = log_A_bar.sum(dim=2).exp()
-    chunk_state = InterChunkScan.apply(chunk_state, chunk_gate)
+    chunk_state, final_state = InterChunkScan.apply(chunk_state, chunk_gate, initial_state)
     y = IntraChunkScan.apply(v, chunk_state, A_bar, B_bar, C)
     y = y + v * D[None, None, :]
     y = rearrange(y, "b n c dv -> b (n c) dv")
-    return y, None
+    return y, final_state

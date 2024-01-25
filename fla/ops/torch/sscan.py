@@ -38,5 +38,5 @@ def selective_scan(v, delta, A, B, C, D, initial_state=None):
     y = torch.stack(ys, dim=1)  # shape (b, l, d_v)
     
     y = y + v * D[None, None, :]
-    final_state = s
+    final_state = s.transpose(-1, -2) # B x d_k x d_v
     return y, final_state
