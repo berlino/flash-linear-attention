@@ -1,5 +1,3 @@
-import chunk
-
 import torch
 import torch.nn.functional as F
 from fla.ops.triton.gla.chunk import chunk_gla
@@ -9,7 +7,7 @@ from fla.ops.triton.gla.chunk_fuse import fused_chunk_gla
 def ceildiv(a, b):
     return -(a // -b)
 
-def naive_loop(q, k, v, gk, stop_grad=False):
+def naive_loop(q, k, v, gk):
     orig_dtype = q.dtype
     q, k, v, gk = map(lambda x: x.float(), (q, k, v, gk))
     batch_size, n_heads, seq_len, d_head_k = q.shape
@@ -32,7 +30,7 @@ def naive_loop(q, k, v, gk, stop_grad=False):
     return o.to(orig_dtype)
 
 
-def naive_chunk_gla(q, k, v, gk, stop_grad=False):
+def naive_chunk_gla(q, k, v, gk):
     orig_dtype = q.dtype
     q, k, v, gk = map(lambda x: x.float(), (q, k, v, gk))
     batch_size, n_heads, seq_len, d_head_k = q.shape
@@ -60,10 +58,6 @@ def naive_chunk_gla(q, k, v, gk, stop_grad=False):
         o_chunk = qk @ v_chunk
         o_chunk += q_chunk @ h
         o[:, :, lo:up, :] = o_chunk
-        # if stop_grad:
-        #     with torch.no_grad():
-        #         decay = gk_chunk[:, :, -1].clone().detach().exp()
-        # else:
         decay = gk_chunk[:, :, -1].exp()
         h = h * decay[..., None] + kv_chunk
 
@@ -74,7 +68,8 @@ if __name__ == "__main__":
     H = 4
     L = 512
     D = 256
-    dtype = torch.bfloat16
+    # dtype = torch.bfloat16
+    dtype = torch.float32
     q = (torch.randn(B, H, L, D).cuda().to(dtype)).requires_grad_(True)
     k = (torch.randn(B, H, L, D).cuda().to(dtype)).requires_grad_(True)
     v = torch.randn(B, H, L, D).cuda().to(dtype).requires_grad_(True)

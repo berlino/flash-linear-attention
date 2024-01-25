@@ -3,7 +3,8 @@
 import pytest
 import torch
 
-from fla.ops.triton.gla import chunk_gla, fused_chunk_gla
+from fla.ops.triton.gla import chunk_gla, fused_chunk_gla, fused_recurrent_gla
+from fla.ops.torch.gla import naive_loop, naive_chunk_gla
 from torch.nn.functional import logsigmoid
 
 @pytest.mark.parametrize("dtype", [torch.float32])
